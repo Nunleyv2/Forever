@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌹 Kürşat & Cemre
+# 🌹 Kurnaz & Aptal
 
 *22 Mayıs 2023'ten beri...*
 
