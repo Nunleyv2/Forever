@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kürşat & Cemre</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0d0008; font-family: Georgia, serif; color: #f5dde8; overflow-x: hidden; }
+canvas#stars { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+
+/* INTRO */
+#intro { position:fixed; inset:0; background:#0d0008; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:999; text-align:center; padding:20px; }
+.i-hearts { font-size:22px; letter-spacing:8px; color:#c0536a; margin-bottom:16px; animation:pulse 2s ease-in-out infinite; }
+.i-title { font-size:32px; font-style:italic; color:#f5dde8; margin-bottom:6px; letter-spacing:2px; }
+.i-amp { color:#c0536a; }
+.i-sub { font-size:12px; letter-spacing:3px; text-transform:uppercase; color:#a06070; font-family:Arial,sans-serif; margin-bottom:40px; }
+#enter-btn { background:transparent; border:1px solid rgba(192,83,106,0.6); color:#f5dde8; font-family:Georgia,serif; font-size:15px; font-style:italic; padding:14px 40px; border-radius:40px; cursor:pointer; letter-spacing:1px; transition:background 0.3s; }
+#enter-btn:hover { background:rgba(192,83,106,0.15); }
+
+/* TABS */
+#main { display:none; position:relative; z-index:2; min-height:100vh; }
+.tab-bar { display:flex; overflow-x:auto; background:rgba(0,0,0,0.6); border-bottom:0.5px solid rgba(192,83,106,0.3); position:sticky; top:0; z-index:10; scrollbar-width:none; }
+.tab-bar::-webkit-scrollbar { display:none; }
+.tab-btn { flex-shrink:0; padding:12px 18px; font-family:Arial,sans-serif; font-size:12px; color:#a06070; background:transparent; border:none; cursor:pointer; letter-spacing:1px; text-transform:uppercase; border-bottom:2px solid transparent; transition:color 0.2s, border-color 0.2s; white-space:nowrap; }
+.tab-btn:hover { color:#f5dde8; }
+.tab-btn.active { color:#c0536a; border-bottom:2px solid #c0536a; }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* ANA SAYFA */
+.hero { text-align:center; padding:50px 20px 34px; background:linear-gradient(180deg,rgba(90,0,30,0.55) 0%,transparent 100%); }
+.rose-line { font-size:18px; letter-spacing:10px; color:#c0536a; margin-bottom:12px; animation:glow 3s ease-in-out infinite; }
+@keyframes glow { 0%,100%{opacity:0.6} 50%{opacity:1} }
+.hero-names { font-size:36px; font-style:italic; color:#f5dde8; letter-spacing:3px; margin-bottom:6px; }
+.hero-amp { color:#c0536a; }
+.hero-since { font-family:Arial,sans-serif; font-size:11px; letter-spacing:3px; color:#a06070; text-transform:uppercase; margin-bottom:26px; }
+.counter-row { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; }
+.counter-box { background:rgba(192,83,106,0.12); border:0.5px solid rgba(192,83,106,0.35); border-radius:10px; padding:10px 16px; min-width:68px; }
+.counter-num { display:block; font-size:24px; font-weight:700; color:#f5dde8; font-family:Arial,sans-serif; }
+.counter-lbl { font-size:9px; color:#a06070; font-family:Arial,sans-serif; text-transform:uppercase; letter-spacing:1.5px; }
+.music-bar { display:flex; align-items:center; justify-content:center; gap:14px; padding:14px 20px; background:rgba(192,83,106,0.08); border-top:0.5px solid rgba(192,83,106,0.2); border-bottom:0.5px solid rgba(192,83,106,0.2); }
+.music-title { font-size:13px; color:#f5dde8; font-family:Arial,sans-serif; font-weight:600; }
+.music-sub { font-size:11px; color:#a06070; font-family:Arial,sans-serif; }
+.play-btn { width:40px; height:40px; border-radius:50%; background:#c0536a; border:none; color:#fff; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.2s; }
+.play-btn:hover { background:#a03050; }
+.visualizer { display:flex; align-items:flex-end; gap:2px; height:24px; }
+.vbar { width:3px; background:#c0536a; border-radius:2px; opacity:0.4; height:4px; }
+.vbar.active { opacity:1; animation:bounce var(--d) ease-in-out infinite alternate; }
+@keyframes bounce { from{height:4px} to{height:var(--h)} }
+.sections { padding:20px 16px; max-width:580px; margin:0 auto; }
+.section-card { background:rgba(255,255,255,0.04); border:0.5px solid rgba(192,83,106,0.25); border-radius:16px; padding:18px; margin-bottom:14px; }
+.section-title { font-size:11px; letter-spacing:2.5px; text-transform:uppercase; color:#c0536a; font-family:Arial,sans-serif; font-weight:600; margin-bottom:14px; }
+.memory-list { list-style:none; }
+.memory-list li { padding:9px 0; border-bottom:0.5px solid rgba(192,83,106,0.15); font-size:13px; color:#e0c0cc; display:flex; align-items:flex-start; gap:10px; font-family:Arial,sans-serif; line-height:1.5; }
+.memory-list li:last-child { border-bottom:none; }
+.mem-dot { width:6px; height:6px; border-radius:50%; background:#c0536a; margin-top:6px; flex-shrink:0; }
+.letter-box { border-left:2px solid #c0536a; padding:14px 16px; font-size:14px; color:#e0c0cc; font-style:italic; line-height:1.9; }
+.special-days { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; }
+.day-pill { background:rgba(192,83,106,0.1); border:0.5px solid rgba(192,83,106,0.3); border-radius:10px; padding:12px; text-align:center; }
+.day-date { font-size:10px; color:#c0536a; font-family:Arial,sans-serif; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
+.day-label { font-size:12px; color:#e0c0cc; font-family:Arial,sans-serif; }
+.add-mem-btn { width:100%; margin-top:12px; padding:9px; background:transparent; border:0.5px dashed rgba(192,83,106,0.4); border-radius:10px; color:#c0536a; font-family:Arial,sans-serif; font-size:12px; cursor:pointer; }
+.add-mem-btn:hover { background:rgba(192,83,106,0.08); }
+.footer { text-align:center; padding:10px 20px 32px; font-style:italic; font-size:13px; color:#a06070; line-height:1.7; }
+.hearts { font-size:18px; letter-spacing:8px; margin-bottom:6px; animation:pulse 2.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
+
+/* OYUN GENEL */
+.game-wrap { padding:40px 24px; max-width:700px; margin:0 auto; display:flex; flex-direction:column; align-items:center; min-height:calc(100vh - 50px); justify-content:center; }
+.game-wrap > * { width:100%; }
+.game-title { text-align:center; font-size:26px; font-style:italic; color:#c0536a; margin-bottom:8px; }
+.game-sub { text-align:center; font-size:14px; color:#a06070; font-family:Arial,sans-serif; margin-bottom:24px; letter-spacing:1px; }
+.game-card { background:rgba(255,255,255,0.04); border:0.5px solid rgba(192,83,106,0.25); border-radius:16px; padding:18px; margin-bottom:14px; }
+.g-btn { background:#c0536a; border:none; color:#fff; font-family:Arial,sans-serif; font-size:13px; padding:10px 24px; border-radius:20px; cursor:pointer; transition:background 0.2s; }
+.g-btn:hover { background:#a03050; }
+.g-btn-outline { background:transparent; border:0.5px solid rgba(192,83,106,0.5); color:#c0536a; font-family:Arial,sans-serif; font-size:13px; padding:10px 24px; border-radius:20px; cursor:pointer; transition:background 0.2s; }
+.g-btn-outline:hover { background:rgba(192,83,106,0.1); }
+.score-row { display:flex; justify-content:center; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
+.score-box { background:rgba(192,83,106,0.12); border:0.5px solid rgba(192,83,106,0.3); border-radius:10px; padding:8px 16px; text-align:center; min-width:70px; }
+.score-num { display:block; font-size:20px; font-weight:700; color:#f5dde8; font-family:Arial,sans-serif; }
+.score-lbl { font-size:9px; color:#a06070; font-family:Arial,sans-serif; text-transform:uppercase; letter-spacing:1px; }
+
+/* YILAN */
+#snake-canvas { display:block; margin:0 auto; border:0.5px solid rgba(192,83,106,0.3); border-radius:10px; background:#1a0010; }
+.snake-controls { display:grid; grid-template-columns:repeat(3,44px); gap:6px; justify-content:center; margin-top:14px; }
+.sc-btn { width:44px; height:44px; background:rgba(192,83,106,0.15); border:0.5px solid rgba(192,83,106,0.3); border-radius:8px; color:#f5dde8; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.sc-btn:active { background:rgba(192,83,106,0.35); }
+
+/* HAFIZA */
+.mem-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px; }
+.mem-card { perspective:500px; height:75px; cursor:pointer; }
+.mem-inner { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform 0.35s; }
+.mem-card.flipped .mem-inner, .mem-card.matched .mem-inner { transform:rotateY(180deg); }
+.mem-face { position:absolute; width:100%; height:100%; backface-visibility:hidden; border-radius:10px; display:flex; align-items:center; justify-content:center; }
+.mem-back { background:#3a0020; border:0.5px solid rgba(192,83,106,0.4); font-size:18px; color:#c0536a; }
+.mem-front { background:rgba(255,255,255,0.06); border:0.5px solid rgba(192,83,106,0.4); transform:rotateY(180deg); font-size:22px; }
+.mem-card.matched .mem-front { background:rgba(192,83,106,0.2); border-color:#c0536a; }
+
+/* TEST */
+.quiz-q { font-size:15px; color:#f5dde8; font-family:Arial,sans-serif; line-height:1.6; margin-bottom:16px; text-align:center; }
+.quiz-opts { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.quiz-opt { background:rgba(255,255,255,0.04); border:0.5px solid rgba(192,83,106,0.3); border-radius:10px; padding:12px; color:#e0c0cc; font-family:Arial,sans-serif; font-size:13px; cursor:pointer; text-align:center; transition:background 0.2s; }
+.quiz-opt:hover { background:rgba(192,83,106,0.12); }
+.quiz-opt.correct { background:rgba(40,160,80,0.2); border-color:#28a050; color:#a0f0b0; }
+.quiz-opt.wrong { background:rgba(192,50,50,0.2); border-color:#c03232; color:#f0a0a0; }
+.quiz-progress { font-size:11px; color:#a06070; font-family:Arial,sans-serif; text-align:center; margin-bottom:12px; letter-spacing:1px; }
+.quiz-timer-bar { width:100%; height:6px; background:rgba(192,83,106,0.15); border-radius:10px; margin-bottom:14px; overflow:hidden; }
+.quiz-timer-fill { height:100%; background:#c0536a; border-radius:10px; transition:width 1s linear; width:100%; }
+.quiz-timer-text { text-align:center; font-size:13px; font-family:Arial,sans-serif; color:#c0536a; font-weight:700; margin-bottom:8px; }
+
+/* SONUÇ & GÖZDEN GEÇİRME */
+.result-screen { display:none; padding:20px; max-width:700px; margin:0 auto; }
+.result-header { text-align:center; margin-bottom:24px; }
+.result-score-big { font-size:52px; font-weight:700; color:#c0536a; font-family:Arial,sans-serif; }
+.result-label { font-size:14px; color:#a06070; font-family:Arial,sans-serif; letter-spacing:1px; margin-bottom:6px; }
+.result-stars { font-size:30px; margin:8px 0; }
+.result-stats { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+.result-stat-box { background:rgba(192,83,106,0.1); border:0.5px solid rgba(192,83,106,0.3); border-radius:10px; padding:10px 18px; text-align:center; min-width:80px; }
+.result-stat-num { display:block; font-size:22px; font-weight:700; color:#f5dde8; font-family:Arial,sans-serif; }
+.result-stat-lbl { font-size:9px; color:#a06070; font-family:Arial,sans-serif; text-transform:uppercase; letter-spacing:1px; }
+.result-btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:24px; }
+.review-list { display:flex; flex-direction:column; gap:10px; }
+.review-item { background:rgba(255,255,255,0.04); border:0.5px solid rgba(192,83,106,0.2); border-radius:12px; padding:14px; }
+.review-item.r-correct { border-color:rgba(40,160,80,0.4); }
+.review-item.r-wrong { border-color:rgba(192,50,50,0.4); }
+.review-qnum { font-size:10px; color:#a06070; font-family:Arial,sans-serif; letter-spacing:1px; margin-bottom:4px; }
+.review-qtext { font-size:13px; color:#f5dde8; font-family:Arial,sans-serif; margin-bottom:8px; line-height:1.5; }
+.review-answers { display:flex; flex-wrap:wrap; gap:6px; }
+.review-ans { font-size:12px; font-family:Arial,sans-serif; padding:4px 10px; border-radius:8px; }
+.review-ans.r-correct-ans { background:rgba(40,160,80,0.2); border:0.5px solid #28a050; color:#a0f0b0; }
+.review-ans.r-wrong-ans { background:rgba(192,50,50,0.2); border:0.5px solid #c03232; color:#f0a0a0; }
+.review-ans.r-neutral { background:rgba(255,255,255,0.05); border:0.5px solid rgba(192,83,106,0.2); color:#e0c0cc; }
+.review-badge { font-size:14px; float:right; }
+
+/* PUZZLE */
+.puzzle-grid { display:grid; gap:4px; margin:0 auto 14px; width:fit-content; }
+.p-tile { width:72px; height:72px; background:rgba(192,83,106,0.15); border:0.5px solid rgba(192,83,106,0.3); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:28px; cursor:pointer; transition:background 0.15s, transform 0.1s; user-select:none; }
+.p-tile:hover { background:rgba(192,83,106,0.25); }
+.p-tile.empty { background:rgba(0,0,0,0.3); border-style:dashed; cursor:default; }
+.p-tile.solved { background:rgba(192,83,106,0.3); }
+
+/* KELIME */
+.word-display { text-align:center; font-size:28px; color:#f5dde8; letter-spacing:6px; margin-bottom:8px; font-family:Arial,sans-serif; font-weight:700; }
+.word-hint { text-align:center; font-size:13px; color:#a06070; font-family:Arial,sans-serif; margin-bottom:16px; font-style:italic; }
+.word-opts { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.word-opt { background:rgba(255,255,255,0.04); border:0.5px solid rgba(192,83,106,0.3); border-radius:10px; padding:12px; color:#e0c0cc; font-family:Arial,sans-serif; font-size:13px; cursor:pointer; text-align:center; transition:background 0.2s; }
+.word-opt:hover { background:rgba(192,83,106,0.12); }
+.word-opt.correct { background:rgba(40,160,80,0.2); border-color:#28a050; color:#a0f0b0; }
+.word-opt.wrong { background:rgba(192,50,50,0.2); border-color:#c03232; color:#f0a0a0; }
+</style>
+</head>
+<body>
+<audio id="bg-music" src="muzik.mp3" loop preload="auto"></audio>
+<canvas id="stars"></canvas>
+
+<!-- INTRO -->
+<div id="intro">
+  <div class="i-hearts">♥ ♥ ♥</div>
+  <div class="i-title">Kürşat <span class="i-amp">&</span> Cemre</div>
+  <div class="i-sub">22 Mayıs 2023'ten beri</div>
+  <button id="enter-btn" onclick="enterSite()">Gir ♥</button>
+</div>
+
+<!-- ANA -->
+<div id="main">
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('home')">🌹 Ana Sayfa</button>
+    <button class="tab-btn" onclick="showTab('memory')">🃏 Hafıza</button>
+    <button class="tab-btn" onclick="showTab('snake')">🐍 Yılan</button>
+    <button class="tab-btn" onclick="showTab('quiz')">❓ Genel Kültür</button>
+    <button class="tab-btn" onclick="showTab('words')">🌍 İngilizce</button>
+  </div>
+
+  <!-- ANA SAYFA -->
+  <div id="tab-home" class="tab-content active">
+    <div class="hero">
+      <div class="rose-line">✦ ✦ ✦</div>
+      <div class="hero-names">Kürşat <span class="hero-amp">&</span> Cemre</div>
+      <div class="hero-since">birlikte olduğumuzdan beri</div>
+      <div class="counter-row">
+        <div class="counter-box"><span class="counter-num" id="cnt-g">—</span><span class="counter-lbl">gün</span></div>
+        <div class="counter-box"><span class="counter-num" id="cnt-s">—</span><span class="counter-lbl">saat</span></div>
+        <div class="counter-box"><span class="counter-num" id="cnt-d">—</span><span class="counter-lbl">dakika</span></div>
+        <div class="counter-box"><span class="counter-num" id="cnt-sn">—</span><span class="counter-lbl">saniye</span></div>
+      </div>
+    </div>
+    <div class="music-bar">
+      <button class="play-btn" id="play-btn" onclick="togglePlay()">⏸</button>
+      <div><div class="music-title">Alper Kul — Seni Sana Sen</div><div class="music-sub">Bizim şarkımız 🎵</div></div>
+      <div class="visualizer">
+        <div class="vbar active" style="--d:0.6s;--h:18px"></div>
+        <div class="vbar active" style="--d:0.4s;--h:14px"></div>
+        <div class="vbar active" style="--d:0.7s;--h:20px"></div>
+        <div class="vbar active" style="--d:0.5s;--h:10px"></div>
+        <div class="vbar active" style="--d:0.45s;--h:22px"></div>
+        <div class="vbar active" style="--d:0.65s;--h:16px"></div>
+        <div class="vbar active" style="--d:0.55s;--h:12px"></div>
+      </div>
+    </div>
+    <div class="sections">
+      <div class="section-card">
+        <div class="section-title">♥ anılarımız</div>
+        <ul class="memory-list" id="mem-list">
+          <li><div class="mem-dot"></div><span>İlk buluşmamız — o gülümseme hâlâ aklımda</span></li>
+          <li><div class="mem-dot"></div><span>İlk kez "seni seviyorum" dediğimiz gece</span></li>
+          <li><div class="mem-dot"></div><span>Yağmurda birlikte ıslandığımız o öğleden sonra</span></li>
+          <li><div class="mem-dot"></div><span>İlk ortak fotoğrafımız</span></li>
+        </ul>
+        <button class="add-mem-btn" onclick="addMem()">+ yeni anı ekle</button>
+      </div>
+      <div class="section-card">
+        <div class="section-title">✉ sana mektup</div>
+        <div class="letter-box">Cemreciğim,<br><br>22 Mayıs 2023'ten bu yana her sabah sana duyduğum minnetle uyanıyorum. Seninle geçen her gün, hayatımın en güzel sayfaları oluyor.<br><br>Seninle olmak, evde hissetmek gibi. ❤<br><br>— Kürşat</div>
+      </div>
+      <div class="section-card">
+        <div class="section-title">★ özel günlerimiz</div>
+        <div class="special-days">
+          <div class="day-pill"><div class="day-date">22 Mayıs 2023</div><div class="day-label">ilk günümüz</div></div>
+          <div class="day-pill"><div class="day-date">14 Şubat</div><div class="day-label">Sevgililer Günü</div></div>
+          <div class="day-pill"><div class="day-date">22 Mayıs 2024</div><div class="day-label">1. yıl dönümü</div></div>
+          <div class="day-pill"><div class="day-date" id="next-d">—</div><div class="day-label" id="next-l">—</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><div class="hearts">♥ ♥ ♥</div>"Seninle her yer ev gibi hissettiriyor."</div>
+  </div>
+
+  <!-- HAFIZA -->
+  <div id="tab-memory" class="tab-content">
+    <div class="game-wrap">
+      <div class="game-title">Hafıza Kartları 🃏</div>
+      <div class="game-sub">Eşleşen çiftleri bul</div>
+      <div class="score-row">
+        <div class="score-box"><span class="score-num" id="m-moves">0</span><span class="score-lbl">hamle</span></div>
+        <div class="score-box"><span class="score-num" id="m-pairs">0</span><span class="score-lbl">eşleşme</span></div>
+        <div class="score-box"><span class="score-num" id="m-time">0</span><span class="score-lbl">saniye</span></div>
+      </div>
+      <div class="mem-grid" id="mem-grid"></div>
+      <div style="text-align:center"><button class="g-btn" onclick="initMemory()">Yeniden Oyna</button></div>
+    </div>
+  </div>
+
+  <!-- YILAN -->
+  <div id="tab-snake" class="tab-content">
+    <div class="game-wrap">
+      <div class="game-title">Yılan Oyunu 🐍</div>
+      <div class="game-sub">Kalpleri topla, duvara çarpma!</div>
+      <div class="score-row">
+        <div class="score-box"><span class="score-num" id="s-score">0</span><span class="score-lbl">skor</span></div>
+        <div class="score-box"><span class="score-num" id="s-best">0</span><span class="score-lbl">rekor</span></div>
+      </div>
+      <canvas id="snake-canvas" width="300" height="300"></canvas>
+      <div class="snake-controls">
+        <div></div><button class="sc-btn" onclick="snakeDir(0,-1)">▲</button><div></div>
+        <button class="sc-btn" onclick="snakeDir(-1,0)">◀</button>
+        <button class="sc-btn" onclick="startSnake()" id="s-start-btn">▶</button>
+        <button class="sc-btn" onclick="snakeDir(1,0)">▶</button>
+        <div></div><button class="sc-btn" onclick="snakeDir(0,1)">▼</button><div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEST -->
+  <div id="tab-quiz" class="tab-content">
+    <div class="game-wrap" id="quiz-game-wrap">
+      <div class="game-title">Genel Kültür ❓</div>
+      <div class="game-sub">Bilgini test et!</div>
+      <div class="score-row">
+        <div class="score-box"><span class="score-num" id="q-score">0</span><span class="score-lbl">doğru</span></div>
+        <div class="score-box"><span class="score-num" id="q-total">100</span><span class="score-lbl">toplam</span></div>
+      </div>
+      <div class="game-card">
+        <div class="quiz-progress" id="q-progress">Soru 1 / 100</div>
+        <div class="quiz-timer-text" id="q-timer-text">10</div>
+        <div class="quiz-timer-bar"><div class="quiz-timer-fill" id="q-timer-fill"></div></div>
+        <div class="quiz-q" id="q-question">Yükleniyor...</div>
+        <div class="quiz-opts" id="q-opts"></div>
+        <div style="text-align:center;display:none" id="q-next-row"><button class="g-btn" onclick="nextQuiz()">Sonraki ▶</button></div>
+      </div>
+    </div>
+    <div class="result-screen" id="quiz-result-screen">
+      <div class="result-header">
+        <div class="result-stars" id="q-result-stars">⭐⭐⭐</div>
+        <div class="result-score-big" id="q-result-score">0/0</div>
+        <div class="result-label" id="q-result-msg">Tebrikler!</div>
+      </div>
+      <div class="result-stats">
+        <div class="result-stat-box"><span class="result-stat-num" id="q-res-correct">0</span><span class="result-stat-lbl">Doğru</span></div>
+        <div class="result-stat-box"><span class="result-stat-num" id="q-res-wrong">0</span><span class="result-stat-lbl">Yanlış</span></div>
+        <div class="result-stat-box"><span class="result-stat-num" id="q-res-pct">0%</span><span class="result-stat-lbl">Başarı</span></div>
+      </div>
+      <div class="result-btns">
+        <button class="g-btn" onclick="initQuiz()">🔄 Tekrar Oyna</button>
+        <button class="g-btn-outline" onclick="showQuizReview()">📋 Soruları Gözden Geçir</button>
+      </div>
+      <div class="review-list" id="q-review-list"></div>
+    </div>
+  </div>
+
+
+
+  <!-- KELIME -->
+  <div id="tab-words" class="tab-content">
+    <div class="game-wrap" id="words-game-wrap">
+      <div class="game-title">İngilizce B1 🌍</div>
+      <div class="game-sub">Kelime ve çeviri sorularını çöz</div>
+      <div class="score-row">
+        <div class="score-box"><span class="score-num" id="w-score">0</span><span class="score-lbl">doğru</span></div>
+        <div class="score-box"><span class="score-num" id="w-wrong">0</span><span class="score-lbl">yanlış</span></div>
+        <div class="score-box"><span class="score-num" id="w-streak">0</span><span class="score-lbl">seri</span></div>
+      </div>
+      <div class="game-card">
+        <div class="quiz-progress" id="w-progress">Soru 1 / 60</div>
+        <div class="quiz-timer-text" id="w-timer-text">15</div>
+        <div class="quiz-timer-bar"><div class="quiz-timer-fill" id="w-timer-fill"></div></div>
+        <div class="word-display" id="w-word">—</div>
+        <div class="word-hint" id="w-hint">...</div>
+        <div class="word-opts" id="w-opts"></div>
+      </div>
+    </div>
+    <div class="result-screen" id="words-result-screen">
+      <div class="result-header">
+        <div class="result-stars" id="w-result-stars">⭐⭐⭐</div>
+        <div class="result-score-big" id="w-result-score">0/0</div>
+        <div class="result-label" id="w-result-msg">Tebrikler!</div>
+      </div>
+      <div class="result-stats">
+        <div class="result-stat-box"><span class="result-stat-num" id="w-res-correct">0</span><span class="result-stat-lbl">Doğru</span></div>
+        <div class="result-stat-box"><span class="result-stat-num" id="w-res-wrong">0</span><span class="result-stat-lbl">Yanlış</span></div>
+        <div class="result-stat-box"><span class="result-stat-num" id="w-res-pct">0%</span><span class="result-stat-lbl">Başarı</span></div>
+        <div class="result-stat-box"><span class="result-stat-num" id="w-res-streak">0</span><span class="result-stat-lbl">En İyi Seri</span></div>
+      </div>
+      <div class="result-btns">
+        <button class="g-btn" onclick="initWords()">🔄 Tekrar Oyna</button>
+        <button class="g-btn-outline" onclick="showWordsReview()">📋 Soruları Gözden Geçir</button>
+      </div>
+      <div class="review-list" id="w-review-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// STARS
+const sc = document.getElementById('stars'), cx = sc.getContext('2d');
+let stars=[];
+function initStars(){sc.width=window.innerWidth;sc.height=window.innerHeight;stars=[];for(let i=0;i<130;i++)stars.push({x:Math.random()*sc.width,y:Math.random()*sc.height,r:Math.random()*1.3+0.2,a:Math.random(),s:Math.random()*0.005+0.002,d:Math.random()>0.5?1:-1});}
+function drawStars(){cx.clearRect(0,0,sc.width,sc.height);stars.forEach(s=>{s.a+=s.s*s.d;if(s.a>=1||s.a<=0.1)s.d*=-1;cx.beginPath();cx.arc(s.x,s.y,s.r,0,Math.PI*2);cx.fillStyle='rgba(240,200,215,'+s.a+')';cx.fill();});requestAnimationFrame(drawStars);}
+initStars();drawStars();window.addEventListener('resize',initStars);
+
+// INTRO & MUSIC
+const audio=document.getElementById('bg-music');
+let isPlaying=false;
+function enterSite(){document.getElementById('intro').style.display='none';document.getElementById('main').style.display='block';audio.play().then(()=>{isPlaying=true;}).catch(()=>{});}
+function togglePlay(){if(isPlaying){audio.pause();isPlaying=false;document.getElementById('play-btn').textContent='▶';document.querySelectorAll('.vbar').forEach(b=>b.classList.remove('active'));}else{audio.play();isPlaying=true;document.getElementById('play-btn').textContent='⏸';document.querySelectorAll('.vbar').forEach(b=>b.classList.add('active'));}}
+
+// TABS
+function showTab(id){document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');event.target.classList.add('active');if(id==='memory')initMemory();if(id==='snake')initSnakeCanvas();if(id==='quiz')initQuiz();if(id==='words')initWords();}
+
+// COUNTER
+const startDate=new Date('2023-05-22T00:00:00');
+function updateCounter(){const now=new Date(),diff=now-startDate,sn=Math.floor(diff/1000),dk=Math.floor(sn/60),sa=Math.floor(dk/60),gn=Math.floor(sa/24);document.getElementById('cnt-g').textContent=gn.toLocaleString('tr-TR');document.getElementById('cnt-s').textContent=sa%24;document.getElementById('cnt-d').textContent=dk%60;document.getElementById('cnt-sn').textContent=sn%60;}
+updateCounter();setInterval(updateCounter,1000);
+const n2=new Date(),yr=n2.getFullYear();let anniv=new Date(yr,4,22);if(anniv<=n2)anniv=new Date(yr+1,4,22);const yrs=anniv.getFullYear()-2023,ords=['','1.','2.','3.','4.','5.','6.','7.','8.','9.','10.'];
+document.getElementById('next-d').textContent='22 Mayıs '+anniv.getFullYear();document.getElementById('next-l').textContent=(ords[yrs]||yrs+'.')+' yıl dönümü';
+function addMem(){const t=prompt('Yeni anınızı yazın:');if(!t||!t.trim())return;const li=document.createElement('li');li.innerHTML='<div class="mem-dot"></div><span>'+t.trim()+'</span>';document.getElementById('mem-list').appendChild(li);}
+
+// ===== HAFIZA =====
+const memItems=[{e:'💌',l:'Mektup'},{e:'🌹',l:'Gül'},{e:'☕',l:'Kahve'},{e:'🌙',l:'Gece'},{e:'🎶',l:'Müzik'},{e:'🤝',l:'El ele'},{e:'🌟',l:'22 Mayıs'},{e:'💑',l:'Birlikte'}];
+let mFlipped=[],mMatched=0,mMoves=0,mLock=false,mTimer=null,mSec=0,mStarted=false;
+function initMemory(){mFlipped=[];mMatched=0;mMoves=0;mLock=false;mSec=0;mStarted=false;clearInterval(mTimer);document.getElementById('m-moves').textContent=0;document.getElementById('m-pairs').textContent=0;document.getElementById('m-time').textContent=0;const cards=shuffle([...memItems,...memItems].map((x,i)=>({...x,id:i})));const g=document.getElementById('mem-grid');g.innerHTML='';cards.forEach(c=>{const d=document.createElement('div');d.className='mem-card';d.dataset.e=c.e;d.innerHTML='<div class="mem-inner"><div class="mem-face mem-back">♥</div><div class="mem-face mem-front">'+c.e+'</div></div>';d.addEventListener('click',()=>flipMem(d));g.appendChild(d);});}
+function flipMem(el){if(mLock||el.classList.contains('flipped')||el.classList.contains('matched'))return;if(!mStarted){mStarted=true;mTimer=setInterval(()=>{mSec++;document.getElementById('m-time').textContent=mSec;},1000);}el.classList.add('flipped');mFlipped.push(el);if(mFlipped.length===2){mMoves++;document.getElementById('m-moves').textContent=mMoves;mLock=true;const[a,b]=mFlipped;if(a.dataset.e===b.dataset.e){a.classList.add('matched');b.classList.add('matched');mMatched++;document.getElementById('m-pairs').textContent=mMatched;mFlipped=[];mLock=false;if(mMatched===memItems.length){clearInterval(mTimer);setTimeout(()=>alert('🎉 Tebrikler! '+mMoves+' hamlede '+mSec+' saniyede tamamladın!'),200);}}else{setTimeout(()=>{a.classList.remove('flipped');b.classList.remove('flipped');mFlipped=[];mLock=false;},800);}}}
+
+// ===== YILAN =====
+const CELL=15,COLS=20,ROWS=20;
+let snake,dir,food,sRunning=false,sInterval=null,sScore=0,sBest=0;
+const sCanvas=document.getElementById('snake-canvas'),sCtx=sCanvas.getContext('2d');
+function initSnakeCanvas(){sCanvas.width=COLS*CELL;sCanvas.height=ROWS*CELL;drawSnakeIdle();}
+function drawSnakeIdle(){sCtx.fillStyle='#1a0010';sCtx.fillRect(0,0,sCanvas.width,sCanvas.height);sCtx.fillStyle='rgba(192,83,106,0.4)';sCtx.font='14px Arial';sCtx.textAlign='center';sCtx.fillText('▶ başlamak için tıkla',sCanvas.width/2,sCanvas.height/2);}
+function startSnake(){if(sRunning){clearInterval(sInterval);sRunning=false;document.getElementById('s-start-btn').textContent='▶';return;}snake=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];dir={x:1,y:0};placeFood();sScore=0;document.getElementById('s-score').textContent=0;sRunning=true;document.getElementById('s-start-btn').textContent='⏸';clearInterval(sInterval);sInterval=setInterval(snakeTick,150);}
+function snakeDir(x,y){if(x!==0&&dir.x!==0)return;if(y!==0&&dir.y!==0)return;dir={x,y};}
+function placeFood(){food={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)};}
+function snakeTick(){const head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};if(head.x<0||head.x>=COLS||head.y<0||head.y>=ROWS||snake.some(s=>s.x===head.x&&s.y===head.y)){clearInterval(sInterval);sRunning=false;document.getElementById('s-start-btn').textContent='▶';if(sScore>sBest){sBest=sScore;document.getElementById('s-best').textContent=sBest;}sCtx.fillStyle='rgba(0,0,0,0.6)';sCtx.fillRect(0,0,sCanvas.width,sCanvas.height);sCtx.fillStyle='#c0536a';sCtx.font='16px Arial';sCtx.textAlign='center';sCtx.fillText('Oyun bitti! Skor: '+sScore,sCanvas.width/2,sCanvas.height/2);return;}snake.unshift(head);if(head.x===food.x&&head.y===food.y){sScore++;document.getElementById('s-score').textContent=sScore;placeFood();}else snake.pop();drawSnake();}
+function drawSnake(){sCtx.fillStyle='#1a0010';sCtx.fillRect(0,0,sCanvas.width,sCanvas.height);sCtx.fillStyle='#c0536a';sCtx.font=(CELL-2)+'px Arial';sCtx.textAlign='center';sCtx.fillText('💗',food.x*CELL+CELL/2,food.y*CELL+CELL-1);snake.forEach((s,i)=>{sCtx.fillStyle=i===0?'#f5dde8':'rgba(192,83,106,'+(0.9-i*0.03)+')';sCtx.beginPath();sCtx.roundRect(s.x*CELL+1,s.y*CELL+1,CELL-2,CELL-2,3);sCtx.fill();});}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')snakeDir(-1,0);if(e.key==='ArrowRight')snakeDir(1,0);if(e.key==='ArrowUp')snakeDir(0,-1);if(e.key==='ArrowDown')snakeDir(0,1);});
+
+// ===== TEST =====
+const quizData=[
+  {q:'Dünyanın en büyük okyanusu hangisidir?',opts:['Atlas Okyanusu','Hint Okyanusu','Pasifik Okyanusu','Arktik Okyanusu'],a:2},
+  {q:'Türkiye\'nin başkenti neresidir?',opts:['İstanbul','Ankara','İzmir','Bursa'],a:1},
+  {q:'Su\'nun kimyasal formülü nedir?',opts:['CO2','H2O','NaCl','O2'],a:1},
+  {q:'Kaç renk gökkuşağında bulunur?',opts:['5','6','7','8'],a:2},
+  {q:'Dünyanın en yüksek dağı hangisidir?',opts:['K2','Kangchenjunga','Everest','Makalu'],a:2},
+  {q:'Shakespeare hangi ülkelidir?',opts:['Fransız','Alman','İtalyan','İngiliz'],a:3},
+  {q:'Hangi element periyodik tabloda "Au" sembolüyle gösterilir?',opts:['Gümüş','Altın','Alüminyum','Argon'],a:1},
+  {q:'Bir yılda kaç ay vardır?',opts:['10','11','12','13'],a:2},
+  {q:'İnsanın kaç kromozomu vardır?',opts:['23','44','46','48'],a:2},
+  {q:'Güneş sisteminde kaç gezegen vardır?',opts:['7','8','9','10'],a:1},
+  {q:'Hangi ülke Eiffel Kulesi\'ne ev sahipliği yapar?',opts:['İtalya','İspanya','Fransa','Almanya'],a:2},
+  {q:'Hangi organ kanı pompalar?',opts:['Karaciğer','Akciğer','Böbrek','Kalp'],a:3},
+  {q:'DNA açılımı nedir?',opts:['Deoxyribonucleic Acid','Dinitrogen Acid','Dynamic Nuclear Agent','Dense Nucleic Array'],a:0},
+  {q:'Osmanlı İmparatorluğu hangi yıl kuruldu?',opts:['1099','1299','1453','1517'],a:1},
+  {q:'Hangi gezegen Güneş\'e en yakındır?',opts:['Venüs','Mars','Jüpiter','Merkür'],a:3},
+  {q:'Işık hızı saniyede yaklaşık kaç km\'dir?',opts:['150.000 km','200.000 km','300.000 km','400.000 km'],a:2},
+  {q:'Hangi hayvan dünyanın en büyük kara hayvanıdır?',opts:['Zürafa','Gergedan','Afrika Fili','Nil Aygırı'],a:2},
+  {q:'Mona Lisa tablosu kimin eseridir?',opts:['Michelangelo','Rafael','Leonardo da Vinci','Botticelli'],a:2},
+  {q:'Hangi ülke 2022 FIFA Dünya Kupası\'nı kazandı?',opts:['Brezilya','Fransa','Arjantin','Almanya'],a:2},
+  {q:'İstanbul Boğazı hangi iki denizi birbirine bağlar?',opts:['Karadeniz - Ege','Karadeniz - Marmara','Marmara - Ege','Marmara - Akdeniz'],a:1},
+  {q:'Hangi vitamin güneş ışığıyla sentezlenir?',opts:['A Vitamini','B12 Vitamini','C Vitamini','D Vitamini'],a:3},
+  {q:'Dünya\'nın en uzun nehri hangisidir?',opts:['Amazon','Nil','Yangtze','Mississippi'],a:1},
+  {q:'Hangi ülke dünya\'nın en kalabalık nüfusuna sahiptir? (2024)',opts:['Çin','ABD','Hindistan','Endonezya'],a:2},
+  {q:'Piramitler hangi ülkededir?',opts:['Irak','Sudan','Mısır','İran'],a:2},
+  {q:'Hangi element en hafif elementtir?',opts:['Helyum','Lityum','Hidrojen','Berilyum'],a:2},
+  {q:'Çanakkale Savaşı hangi yılda başladı?',opts:['1912','1913','1914','1915'],a:3},
+  {q:'Dünyanın en derin gölü hangisidir?',opts:['Hazar Gölü','Baykal Gölü','Süperior Gölü','Titicaca Gölü'],a:1},
+  {q:'Hangi şehir "Ebedi Şehir" olarak bilinir?',opts:['Atina','Paris','Roma','Kahire'],a:2},
+  {q:'İnsan vücudunda kaç kemik vardır?',opts:['186','196','206','216'],a:2},
+  {q:'Hangi ülke Japonya\'nın başkentidir?',opts:['Osaka','Kyoto','Hiroshima','Tokyo'],a:3},
+  {q:'Hangi gezegen "Kızıl Gezegen" olarak bilinir?',opts:['Jüpiter','Satürn','Mars','Venüs'],a:2},
+  {q:'Türk alfabesinde kaç harf vardır?',opts:['27','28','29','30'],a:2},
+  {q:'Hangi ülkede Colosseum bulunur?',opts:['Yunanistan','Türkiye','İtalya','İspanya'],a:2},
+  {q:'"Big Bang" Türkçe\'de ne anlama gelir?',opts:['Büyük Patlama','Büyük Uzay','Büyük Evren','Büyük Işık'],a:0},
+  {q:'Hangi ülkenin bayrağında ay ve yıldız sembolü vardır?',opts:['Mısır','Suudi Arabistan','Türkiye','İran'],a:2},
+  {q:'Atatürk hangi yılda vefat etmiştir?',opts:['1936','1937','1938','1939'],a:2},
+  {q:'Dünyanın en büyük çölü hangisidir?',opts:['Gobi','Sahara','Atacama','Antarktika'],a:3},
+  {q:'Hangi bilim insanı yerçekimi yasasını keşfetmiştir?',opts:['Einstein','Galileo','Newton','Kepler'],a:2},
+  {q:'Türkiye kaç komşu ülkeyle sınır paylaşır?',opts:['6','7','8','9'],a:2},
+  {q:'Hangi element periyodik tabloda "Fe" sembolüyle gösterilir?',opts:['Flor','Demir','Bakır','Fosfor'],a:1},
+  {q:'Hangi okyanusun adı "barışçıl" anlamına gelir?',opts:['Atlas','Hint','Pasifik','Arktik'],a:2},
+  {q:'Dünya\'nın kaçıncı büyük kıtası Avrupa\'dır?',opts:['4.','5.','6.','7.'],a:2},
+  {q:'Çin Seddi\'nin uzunluğu yaklaşık kaç km\'dir?',opts:['5.000 km','13.000 km','21.000 km','30.000 km'],a:2},
+  {q:'Hangi hastalık "Black Death" olarak da bilinir?',opts:['Kolera','Veba','Tifüs','Çiçek'],a:1},
+  {q:'Uçakları kim icat etmiştir?',opts:['Edison Kardeşler','Bell Kardeşler','Wright Kardeşler','Newton Kardeşler'],a:2},
+  {q:'Hangi ülke Dünya\'nın en küçük ülkesidir?',opts:['Monaco','Liechtenstein','San Marino','Vatikan'],a:3},
+  {q:'İnsanın normal vücut sıcaklığı kaç derecedir?',opts:['35°C','36°C','37°C','38°C'],a:2},
+  {q:'"Romeo ve Juliet" hangi şehirde geçer?',opts:['Venedik','Floransa','Roma','Verona'],a:3},
+  {q:'Hangi ülke en fazla Nobel ödülü almıştır?',opts:['İngiltere','Almanya','Fransa','ABD'],a:3},
+  {q:'Güneş\'in etrafında Dünya\'nın bir tam turu kaç gün sürer?',opts:['364','365','366','367'],a:1},
+  {q:'Hangi madde sıvıların en yoğunudur?',opts:['Su','Cıva','Etanol','Aseton'],a:1},
+  {q:'Hangi ülke en fazla nükleer santrale sahiptir?',opts:['Fransa','Çin','Rusya','ABD'],a:3},
+  {q:'Türkiye\'nin en büyük gölü hangisidir?',opts:['Beyşehir','Eğirdir','Van','Tuz'],a:2},
+  {q:'Hangi ülkenin başkenti Canberra\'dır?',opts:['Yeni Zelanda','Avustralya','Kanada','Güney Afrika'],a:1},
+  {q:'Hangi organ bilirubin üretir?',opts:['Böbrek','Dalak','Karaciğer','Pankreas'],a:2},
+  {q:'İlk modern olimpiyat oyunları nerede düzenlendi?',opts:['Roma','Paris','Atina','Londra'],a:2},
+  {q:'Hangi ülkede "Machu Picchu" bulunur?',opts:['Meksika','Kolombiya','Peru','Brezilya'],a:2},
+  {q:'Pi sayısının yaklaşık değeri nedir?',opts:['3.14','3.16','3.18','3.20'],a:0},
+  {q:'Hangi deniz tuzluluk oranıyla en yüksek yoğunluğa sahiptir?',opts:['Karadeniz','Akdeniz','Ölü Deniz','Kızıl Deniz'],a:2},
+  {q:'Cumhuriyet hangi yıl ilan edildi?',opts:['1920','1921','1922','1923'],a:3},
+  {q:'Hangi sanatçı "Yıldızlı Gece" tablosunu yapmıştır?',opts:['Monet','Van Gogh','Picasso','Dali'],a:1},
+  {q:'Hangi gazın atmosferdeki oranı en yüksektir?',opts:['Oksijen','Karbondioksit','Azot','Hidrojen'],a:2},
+  {q:'"Odesa" hangi ülkede bulunur?',opts:['Rusya','Moldova','Belarus','Ukrayna'],a:3},
+  {q:'Dünyanın en büyük ülkesi yüzölçümü bakımından hangisidir?',opts:['Kanada','Çin','ABD','Rusya'],a:3},
+  {q:'Hangi müzik aleti "Kraliçe\'nin aleti" olarak anılır?',opts:['Keman','Piyano','Org','Arp'],a:2},
+  {q:'Hangi vitamin eksikliği skorbüt hastalığına yol açar?',opts:['A','B12','C','D'],a:2},
+  {q:'Hangi ülke 1969\'da aya ilk insanı gönderdi?',opts:['Sovyetler Birliği','Çin','ABD','Fransa'],a:2},
+  {q:'Kaç derecelik açıya "tam açı" denir?',opts:['90°','180°','270°','360°'],a:3},
+  {q:'Hangi ülkenin para birimi "Yen"dir?',opts:['Çin','Japonya','Kore','Vietnam'],a:1},
+  {q:'"Hamlet" hangi yazara aittir?',opts:['Dickens','Tolstoy','Shakespeare','Cervantes'],a:2},
+  {q:'Fotosentez hangi organel sayesinde gerçekleşir?',opts:['Mitokondri','Ribozom','Kloroplast','Çekirdek'],a:2},
+  {q:'Hangi ülkede Stonehenge bulunur?',opts:['İskoçya','İrlanda','Galler','İngiltere'],a:3},
+  {q:'Dünyanın en yüksek şelalesi hangisidir?',opts:['Niagara','Victoria','Angel','İguazu'],a:2},
+  {q:'Hangi ülkenin başkenti "Nairobi"dir?',opts:['Nijerya','Etiyopya','Kenya','Tanzanya'],a:2},
+  {q:'Kan grubunu kim keşfetmiştir?',opts:['Pasteur','Karl Landsteiner','Flemming','Lister'],a:1},
+  {q:'Hangi element periyodik tabloda "K" sembolüyle gösterilir?',opts:['Kalsiyum','Krom','Potasyum','Kobalt'],a:2},
+  {q:'Türkiye\'nin yüzölçümü yaklaşık kaç km²\'dir?',opts:['580.000','680.000','780.000','880.000'],a:2},
+  {q:'Hangi ülkede Tac Mahal bulunur?',opts:['Pakistan','Bangladeş','Hindistan','Sri Lanka'],a:2},
+  {q:'Dünyanın en kısa boylu kıtası hangisidir?',opts:['Avrupa','Avustralya','Antarktika','Güney Amerika'],a:1},
+  {q:'Hangi ülke "Çin Seddi"ni inşa etmiştir?',opts:['Japonya','Kore','Moğolistan','Çin'],a:3},
+  {q:'İlk bilgisayar hangi on yılda icat edildi?',opts:['1920\'ler','1930\'lar','1940\'lar','1950\'ler'],a:2},
+  {q:'Hangi ülkenin başkenti "Lima"dır?',opts:['Şili','Arjantin','Peru','Kolombiya'],a:2},
+  {q:'Beethoven hangi ülkelidir?',opts:['Avusturyalı','İsviçreli','Alman','Hollandalı'],a:2},
+  {q:'İnsan gözü kaç rengi ayırt edebilir?',opts:['1 milyon','10 milyon','100 milyon','1 milyar'],a:1},
+  {q:'Hangi gezegen halkalarıyla ünlüdür?',opts:['Jüpiter','Neptün','Uranüs','Satürn'],a:3},
+  {q:'Hangi ülkede "Acropolis" bulunur?',opts:['Türkiye','İtalya','Yunanistan','İspanya'],a:2},
+  {q:'Tuz kimyasal olarak nedir?',opts:['NaCl','KCl','CaCl2','MgCl2'],a:0},
+  {q:'İnsanın en büyük organı hangisidir?',opts:['Karaciğer','Beyin','Cilt','Akciğer'],a:2},
+  {q:'Hangi ülkenin başkenti "Oslo"dur?',opts:['İsveç','Danimarka','Finlandiya','Norveç'],a:3},
+  {q:'Filler kaç yıl yaşayabilir?',opts:['40-50 yıl','50-60 yıl','60-70 yıl','70-80 yıl'],a:2},
+  {q:'Hangi yıl İstanbul\'un fethi gerçekleşti?',opts:['1451','1452','1453','1454'],a:2},
+  {q:'Dünya\'da kaç ülke bulunmaktadır? (yaklaşık)',opts:['185','193','201','210'],a:1},
+  {q:'Hangi ülkede "Ayers Rock (Uluru)" bulunur?',opts:['Yeni Zelanda','Papua Yeni Gine','Avustralya','Endonezya'],a:2},
+  {q:'Bir oktavda kaç nota vardır?',opts:['6','7','8','9'],a:2},
+  {q:'Hangi ülke en fazla altın üretir?',opts:['Rusya','Avustralya','Güney Afrika','Çin'],a:3},
+  {q:'Atlantik Okyanusu\'nun en derin noktasının derinliği kaç metredir? (yaklaşık)',opts:['6.000 m','7.000 m','8.000 m','9.000 m'],a:3},
+  {q:'Hangi ülkede "Pisa Kulesi" bulunur?',opts:['Fransa','İspanya','Yunanistan','İtalya'],a:3},
+  {q:'Türkiye\'de kaç il vardır?',opts:['79','80','81','82'],a:2},
+  {q:'Hangi ülkenin başkenti "Varşova"dır?',opts:['Çek Cumhuriyeti','Slovakya','Polonya','Macaristan'],a:2},
+  {q:'İnsanlık tarihinin en büyük imparatorluğu hangisidir?',opts:['Roma','Osmanlı','Moğol','İngiliz'],a:2},
+];
+
+let qIdx=0,qScore=0,qAnswered=false,qTimerInterval=null,qTimeLeft=10;
+let qShuffled=[],qHistory=[];
+
+function startQuizTimer(){
+  clearInterval(qTimerInterval);
+  qTimeLeft=10;
+  updateQuizTimerUI();
+  qTimerInterval=setInterval(()=>{
+    qTimeLeft--;
+    updateQuizTimerUI();
+    if(qTimeLeft<=0){
+      clearInterval(qTimerInterval);
+      if(!qAnswered){
+        qAnswered=true;
+        const d=qShuffled[qIdx];
+        // find correct option index in shuffled opts
+        const opts=document.querySelectorAll('.quiz-opt');
+        opts.forEach(b=>{if(b.textContent===d.opts[d.a])b.classList.add('correct');});
+        qHistory.push({q:d.q,opts:d.opts,a:d.a,chosen:-1});
+        document.getElementById('q-next-row').style.display='block';
+      }
+    }
+  },1000);
+}
+
+function updateQuizTimerUI(){
+  const fill=document.getElementById('q-timer-fill');
+  const txt=document.getElementById('q-timer-text');
+  if(!fill||!txt)return;
+  txt.textContent=qTimeLeft+'s';
+  fill.style.width=(qTimeLeft/10*100)+'%';
+  fill.style.background=qTimeLeft<=3?'#e03030':'#c0536a';
+}
+
+function initQuiz(){
+  qIdx=0;qScore=0;qAnswered=false;qHistory=[];
+  qShuffled=shuffle([...quizData]);
+  document.getElementById('q-score').textContent=0;
+  document.getElementById('q-total').textContent=qShuffled.length;
+  document.getElementById('quiz-game-wrap').style.display='flex';
+  document.getElementById('quiz-result-screen').style.display='none';
+  showQuiz();
+}
+function showQuiz(){
+  clearInterval(qTimerInterval);
+  if(qIdx>=qShuffled.length){
+    showQuizResult();
+    return;
+  }
+  const d=qShuffled[qIdx];
+  document.getElementById('q-progress').textContent='Soru '+(qIdx+1)+' / '+qShuffled.length;
+  document.getElementById('q-question').textContent=d.q;
+  document.getElementById('q-next-row').style.display='none';
+  qAnswered=false;
+  const o=document.getElementById('q-opts');
+  o.innerHTML='';
+  // shuffle options while keeping correct answer tracked
+  const idxArr=[0,1,2,3];
+  const shuffledIdx=shuffle(idxArr);
+  const newOpts=shuffledIdx.map(i=>d.opts[i]);
+  const newCorrect=shuffledIdx.indexOf(d.a);
+  shuffledIdx.forEach((origIdx,pos)=>{
+    const b=document.createElement('button');
+    b.className='quiz-opt';
+    b.textContent=d.opts[origIdx];
+    b.onclick=()=>answerQuiz(pos,b,newCorrect,d,shuffledIdx);
+    o.appendChild(b);
+  });
+  startQuizTimer();
+}
+function answerQuiz(i,el,correct,d,shuffledIdx){
+  if(qAnswered)return;
+  qAnswered=true;
+  clearInterval(qTimerInterval);
+  const chosen=shuffledIdx[i];
+  if(i===correct){el.classList.add('correct');qScore++;document.getElementById('q-score').textContent=qScore;}
+  else{el.classList.add('wrong');document.querySelectorAll('.quiz-opt')[correct].classList.add('correct');}
+  qHistory.push({q:d.q,opts:d.opts,a:d.a,chosen:chosen});
+  document.getElementById('q-next-row').style.display='block';
+}
+function nextQuiz(){qIdx++;showQuiz();}
+
+function showQuizResult(){
+  clearInterval(qTimerInterval);
+  document.getElementById('quiz-game-wrap').style.display='none';
+  const rs=document.getElementById('quiz-result-screen');
+  rs.style.display='block';
+  const total=qShuffled.length,pct=Math.round(qScore/total*100);
+  document.getElementById('q-result-score').textContent=qScore+'/'+total;
+  document.getElementById('q-res-correct').textContent=qScore;
+  document.getElementById('q-res-wrong').textContent=total-qScore;
+  document.getElementById('q-res-pct').textContent=pct+'%';
+  let stars='⭐',msg='Daha çok çalışmalısın!';
+  if(pct>=90){stars='🌟🌟🌟';msg='Mükemmel! Gerçek bir bilge!';}
+  else if(pct>=70){stars='⭐⭐⭐';msg='Harika! Çok iyi biliyorsun!';}
+  else if(pct>=50){stars='⭐⭐';msg='Fena değil, biraz daha!';}
+  document.getElementById('q-result-stars').textContent=stars;
+  document.getElementById('q-result-msg').textContent=msg;
+  document.getElementById('q-review-list').innerHTML='';
+}
+function showQuizReview(){
+  const rl=document.getElementById('q-review-list');
+  if(rl.children.length>0){rl.innerHTML='';return;}
+  qHistory.forEach((h,i)=>{
+    const correct=h.chosen===h.a;
+    const div=document.createElement('div');
+    div.className='review-item '+(correct?'r-correct':'r-wrong');
+    let ansHtml=h.opts.map((opt,idx)=>{
+      let cls='r-neutral';
+      if(idx===h.a)cls='r-correct-ans';
+      else if(idx===h.chosen)cls='r-wrong-ans';
+      return '<span class="review-ans '+cls+'">'+opt+'</span>';
+    }).join('');
+    div.innerHTML='<div class="review-qnum">SORU '+(i+1)+'<span class="review-badge">'+(correct?'✅':'❌')+'</span></div><div class="review-qtext">'+h.q+'</div><div class="review-answers">'+ansHtml+'</div>';
+    rl.appendChild(div);
+  });
+}
+
+// B1 İngilizce: kelime + çeviri soruları
+// type: 'word' = İngilizce kelime → Türkçe anlam
+// type: 'tr2en' = Türkçe cümle → İngilizce çeviri
+// type: 'en2tr' = İngilizce cümle → Türkçe çeviri
+const wordList=[
+  // --- KELİME SORULARI (B1) ---
+  {type:'word',w:'Improve',h:'Daha iyi hale getirmek',t:'Geliştirmek',d:['Geliştirmek','Bozmak','Kaybetmek','Azaltmak']},
+  {type:'word',w:'Suggest',h:'Bir fikir önermek',t:'Önermek',d:['Önermek','Reddetmek','Anlamak','Gizlemek']},
+  {type:'word',w:'Achieve',h:'Bir hedefe ulaşmak',t:'Başarmak',d:['Başarmak','Vazgeçmek','Unutmak','Kaçmak']},
+  {type:'word',w:'Nervous',h:'Kaygılı veya gergin hisseden',t:'Sinirli/Gergin',d:['Sinirli/Gergin','Mutlu','Sakin','Cesur']},
+  {type:'word',w:'Opportunity',h:'Bir şey yapmak için uygun zaman ya da durum',t:'Fırsat',d:['Fırsat','Tehlike','Sorun','Engel']},
+  {type:'word',w:'Curious',h:'Bir şeyi öğrenmek isteyen',t:'Meraklı',d:['Meraklı','Üzgün','Yorgun','Sinirli']},
+  {type:'word',w:'Disappointed',h:'Beklentiler karşılanmadığında hissedilen duygu',t:'Hayal kırıklığına uğramış',d:['Hayal kırıklığına uğramış','Şaşırmış','Memnun','Heyecanlı']},
+  {type:'word',w:'Environment',h:'İnsanları çevreleyen doğal dünya',t:'Çevre',d:['Çevre','Nüfus','Teknoloji','Hükümet']},
+  {type:'word',w:'Responsible',h:'Yükümlülüklerin bilincinde olan',t:'Sorumlu',d:['Sorumlu','Dikkatsiz','Tembel','Anlayışsız']},
+  {type:'word',w:'Prefer',h:'Bir şeyi diğerine daha çok sevmek',t:'Tercih etmek',d:['Tercih etmek','Nefret etmek','Unutmak','Kaçınmak']},
+  {type:'word',w:'Polite',h:'Nezaket kurallarına uyan',t:'Kibar',d:['Kibar','Kaba','Saygısız','Bencil']},
+  {type:'word',w:'Journey',h:'Bir yerden başka bir yere seyahat',t:'Yolculuk',d:['Yolculuk','Konut','İş','Tatil']},
+  {type:'word',w:'Comfortable',h:'Fiziksel olarak rahat hissettiren',t:'Rahat',d:['Rahat','Sert','Soğuk','Sıkıcı']},
+  {type:'word',w:'Confident',h:'Kendine güvenen',t:'Kendinden emin',d:['Kendinden emin','Korkak','Utangaç','Kararsız']},
+  {type:'word',w:'Crowded',h:'Çok sayıda insanla dolu',t:'Kalabalık',d:['Kalabalık','Boş','Sessiz','Temiz']},
+  {type:'word',w:'Solve',h:'Bir sorunu çözmek',t:'Çözmek',d:['Çözmek','Yaratmak','Kaçmak','Bulmak']},
+  {type:'word',w:'Experience',h:'Bir şeyin pratik olarak bilinmesi',t:'Deneyim',d:['Deneyim','Hayal','Fikir','Yetki']},
+  {type:'word',w:'Disagree',h:'Farklı bir görüşe sahip olmak',t:'Aynı fikirde olmamak',d:['Aynı fikirde olmamak','Onaylamak','Güvenmek','Desteklemek']},
+  {type:'word',w:'Pollute',h:'Çevreyi kirletmek',t:'Kirletmek',d:['Kirletmek','Temizlemek','Korumak','Geliştirmek']},
+  {type:'word',w:'Generous',h:'Başkalarına cömertçe veren',t:'Cömert',d:['Cömert','Cimri','Kıskanç','Hırslı']},
+  {type:'word',w:'Ancient',h:'Çok eski zamanlara ait',t:'Antik/Eski',d:['Antik/Eski','Modern','Yeni','Gelecekteki']},
+  {type:'word',w:'Recognize',h:'Birini veya bir şeyi bilmek ya da tanımak',t:'Tanımak',d:['Tanımak','Unutmak','Görmezden gelmek','Kaybetmek']},
+  {type:'word',w:'Tidy',h:'Düzenli ve temiz',t:'Düzenli',d:['Düzenli','Dağınık','Kirli','Karışık']},
+  {type:'word',w:'Exhausted',h:'Tamamen bitkin, çok yorgun',t:'Bitkin',d:['Bitkin','Enerjik','Mutlu','Heyecanlı']},
+  {type:'word',w:'Habit',h:'Düzenli olarak yapılan davranış',t:'Alışkanlık',d:['Alışkanlık','Kural','Kaza','Zorunluluk']},
+  {type:'word',w:'Complaint',h:'Tatminsizliği ifade etme',t:'Şikayet',d:['Şikayet','Övgü','Rica','Tavsiye']},
+  {type:'word',w:'Earn',h:'Çalışarak para kazanmak',t:'Kazanmak',d:['Kazanmak','Harcamak','Kaybetmek','Ödünç almak']},
+  {type:'word',w:'Deadline',h:'Bir işin bitirilmesi gereken son tarih',t:'Son teslim tarihi',d:['Son teslim tarihi','Başlangıç tarihi','Tatil','Toplantı']},
+  {type:'word',w:'Fluent',h:'Bir dili akıcı biçimde konuşabilen',t:'Akıcı',d:['Akıcı','Acemi','Yavaş','Kararsız']},
+  {type:'word',w:'Afford',h:'Bir şeyi satın almaya yeterli paraya sahip olmak',t:'Karşılayabilmek',d:['Karşılayabilmek','Reddetmek','İstemek','Kaçmak']},
+  // --- TÜRKÇE → İNGİLİZCE ÇEVİRİ ---
+  {type:'tr2en',w:'Her gün egzersiz yapıyorum.',h:'Hangi çeviri doğru?',t:'I exercise every day.',d:['I exercise every day.','I exercised yesterday.','I will exercise every day.','I am exercising now.']},
+  {type:'tr2en',w:'Dün akşam film izledim.',h:'Hangi çeviri doğru?',t:'I watched a movie last night.',d:['I watch a movie last night.','I watched a movie last night.','I will watch a movie last night.','I am watching a movie last night.']},
+  {type:'tr2en',w:'Seninle konuşmam gerek.',h:'Hangi çeviri doğru?',t:'I need to talk to you.',d:['I need to talk to you.','I needed to talk to you.','I want talking to you.','I talked to you.']},
+  {type:'tr2en',w:'Çok yağmur yağıyor.',h:'Hangi çeviri doğru?',t:"It's raining a lot.",d:["It's raining a lot.",'It rained a lot.','It rains a lot yesterday.','It will rain a lot.']},
+  {type:'tr2en',w:'Ne zamandan beri buradayken?',h:'Hangi çeviri doğru?',t:'How long have you been here?',d:['How long have you been here?','How long are you here?','How long were you here?','Since when you are here?']},
+  {type:'tr2en',w:'Yardımına ihtiyacım var.',h:'Hangi çeviri doğru?',t:'I need your help.',d:['I need your help.','I needed your help.','I want your help me.','I am needing your help.']},
+  {type:'tr2en',w:'Bu kitabı daha önce okudum.',h:'Hangi çeviri doğru?',t:'I have already read this book.',d:['I have already read this book.','I already read this book yesterday.','I will read this book before.','I am reading this book already.']},
+  {type:'tr2en',w:'Yarın saat kaçta buluşacağız?',h:'Hangi çeviri doğru?',t:'What time will we meet tomorrow?',d:['What time will we meet tomorrow?','What time we meet tomorrow?','When time are we meeting tomorrow?','What time did we meet tomorrow?']},
+  {type:'tr2en',w:'Türkiye\'nin başkenti Ankara\'dır.',h:'Hangi çeviri doğru?',t:'The capital of Turkey is Ankara.',d:['The capital of Turkey is Ankara.','The capital of Turkey are Ankara.','Turkey\'s capital city were Ankara.','Capital of Turkey is at Ankara.']},
+  {type:'tr2en',w:'Bu elbise sana çok yakışıyor.',h:'Hangi çeviri doğru?',t:'This dress suits you very well.',d:['This dress suits you very well.','This dress is suiting you well.','This dress suited you very well.','This dress is fitting to you well.']},
+  {type:'tr2en',w:'Seni özledim.',h:'Hangi çeviri doğru?',t:'I missed you.',d:['I missed you.','I miss you always.','I am missing you yesterday.','I had miss you.']},
+  {type:'tr2en',w:'Lütfen daha yavaş konuşur musun?',h:'Hangi çeviri doğru?',t:'Could you speak more slowly, please?',d:['Could you speak more slowly, please?','Can you speak slow please?','Do you speak more slowly?','Would you speaking slowly?']},
+  {type:'tr2en',w:'Ne kadar süredir İngilizce öğreniyorsun?',h:'Hangi çeviri doğru?',t:'How long have you been learning English?',d:['How long have you been learning English?','How long do you learn English?','Since when you learn English?','How long you are learning English?']},
+  {type:'tr2en',w:'Geçen yaz İstanbul\'a gittim.',h:'Hangi çeviri doğru?',t:'I went to Istanbul last summer.',d:['I went to Istanbul last summer.','I go to Istanbul last summer.','I have gone to Istanbul last summer.','I was going to Istanbul last summer.']},
+  {type:'tr2en',w:'Burada sigara içmek yasak.',h:'Hangi çeviri doğru?',t:'Smoking is not allowed here.',d:['Smoking is not allowed here.','Smoke is not allowed here.','Smoking are not allowed here.','To smoke is forbidden to here.']},
+  // --- İNGİLİZCE → TÜRKÇE ÇEVİRİ ---
+  {type:'en2tr',w:'She has been working here for five years.',h:'Bu cümlenin Türkçesi nedir?',t:'Beş yıldır burada çalışıyor.',d:['Beş yıldır burada çalışıyor.','Beş yıl önce burada çalıştı.','Beş yıl sonra burada çalışacak.','Burada beş yıl çalışmak istiyor.']},
+  {type:'en2tr',w:'You should drink more water.',h:'Bu cümlenin Türkçesi nedir?',t:'Daha fazla su içmelisin.',d:['Daha fazla su içmelisin.','Dün daha fazla su içtin.','Daha fazla su içmek istiyorum.','Su içmek zorunda değilsin.']},
+  {type:'en2tr',w:'I\'m sorry, I didn\'t mean to upset you.',h:'Bu cümlenin Türkçesi nedir?',t:'Üzgünüm, seni üzmek istemedim.',d:['Üzgünüm, seni üzmek istemedim.','Üzgünüm, seni anlayamıyorum.','Özür dilerim, seni göremedim.','Pardon, seni tanıyamadım.']},
+  {type:'en2tr',w:'Could you tell me the way to the station?',h:'Bu cümlenin Türkçesi nedir?',t:'Bana istasyona giden yolu söyler misiniz?',d:['Bana istasyona giden yolu söyler misiniz?','İstasyon nerededir biliyor musunuz?','İstasyona gitmek ister misiniz?','İstasyona ne zaman gideceksiniz?']},
+  {type:'en2tr',w:'The weather is going to be sunny this weekend.',h:'Bu cümlenin Türkçesi nedir?',t:'Bu hafta sonu hava güneşli olacak.',d:['Bu hafta sonu hava güneşli olacak.','Bu hafta sonu hava güneşliydi.','Geçen hafta sonu hava güneşliydi.','Bu hafta sonu hava yağmurlu olacak.']},
+  {type:'en2tr',w:'I\'ve never been to Japan.',h:'Bu cümlenin Türkçesi nedir?',t:'Hiç Japonya\'ya gitmedim.',d:['Hiç Japonya\'ya gitmedim.','Japonya\'ya gitmek istemiyorum.','Japonya\'dan yeni döndüm.','Yakında Japonya\'ya gideceğim.']},
+  {type:'en2tr',w:'He forgot to bring his passport.',h:'Bu cümlenin Türkçesi nedir?',t:'Pasaportunu getirmeyi unuttu.',d:['Pasaportunu getirmeyi unuttu.','Pasaportunun nerede olduğunu unuttu.','Pasaportunu kaybetti.','Pasaportunu evde bıraktı mı?']},
+  {type:'en2tr',w:'We decided to stay home this evening.',h:'Bu cümlenin Türkçesi nedir?',t:'Bu akşam evde kalmaya karar verdik.',d:['Bu akşam evde kalmaya karar verdik.','Bu akşam eve gitmek zorundayız.','Bu akşam evde kalmak istiyoruz.','Bu akşam için plan yapmadık.']},
+  {type:'en2tr',w:'I\'m looking forward to meeting you.',h:'Bu cümlenin Türkçesi nedir?',t:'Seni görmek için sabırsızlanıyorum.',d:['Seni görmek için sabırsızlanıyorum.','Seninle görüşmeyi hatırladım.','Seninle tanışmayı planlıyorum.','Seni görmeden önce bekleyeceğim.']},
+  {type:'en2tr',w:'How much does this cost?',h:'Bu cümlenin Türkçesi nedir?',t:'Bu ne kadar?',d:['Bu ne kadar?','Bunu nasıl satın alabilirim?','Bunu beğeniyor musun?','Bunu aldın mı?']},
+  {type:'en2tr',w:'She is as tall as her brother.',h:'Bu cümlenin Türkçesi nedir?',t:'O, kardeşi kadar uzun boylu.',d:['O, kardeşi kadar uzun boylu.','O, kardeşinden daha uzun boylu.','Kardeşi ondan daha uzun boylu.','Kardeşleri aynı boyda değil.']},
+  {type:'en2tr',w:'You don\'t have to come if you\'re busy.',h:'Bu cümlenin Türkçesi nedir?',t:'Meşgulsen gelmek zorunda değilsin.',d:['Meşgulsen gelmek zorunda değilsin.','Meşgulsen gelmemelisin.','Meşgulsen gelememezsin.','Meşgul olsan bile gelmelisin.']},
+  {type:'en2tr',w:'I wish I could speak three languages.',h:'Bu cümlenin Türkçesi nedir?',t:'Keşke üç dil konuşabilseydim.',d:['Keşke üç dil konuşabilseydim.','Üç dil öğrenmek istiyorum.','Üç dil konuşabilmek çok zor.','Bir gün üç dil konuşacağım.']},
+];
+
+let wIdx=0,wScore=0,wWrong=0,wStreak=0,wBestStreak=0,wAnswered=false,wTimerInterval=null,wTimeLeft=15,wShuffled=[],wHistory=[];
+
+function startWordTimer(){
+  clearInterval(wTimerInterval);
+  wTimeLeft=15;
+  updateWordTimerUI();
+  wTimerInterval=setInterval(()=>{
+    wTimeLeft--;
+    updateWordTimerUI();
+    if(wTimeLeft<=0){
+      clearInterval(wTimerInterval);
+      if(!wAnswered){
+        wAnswered=true;
+        wStreak=0;
+        wWrong++;
+        document.getElementById('w-wrong').textContent=wWrong;
+        document.getElementById('w-streak').textContent=0;
+        const d=wShuffled[wIdx];
+        document.querySelectorAll('.word-opt').forEach(b=>{if(b.textContent===d.t)b.classList.add('correct');});
+        wHistory.push({d,chosen:null});
+        setTimeout(()=>{wIdx++;showWord();},1100);
+      }
+    }
+  },1000);
+}
+
+function updateWordTimerUI(){
+  const fill=document.getElementById('w-timer-fill');
+  const txt=document.getElementById('w-timer-text');
+  if(!fill||!txt)return;
+  txt.textContent=wTimeLeft+'s';
+  fill.style.width=(wTimeLeft/15*100)+'%';
+  fill.style.background=wTimeLeft<=4?'#e03030':'#c0536a';
+}
+
+function initWords(){
+  wIdx=0;wScore=0;wWrong=0;wStreak=0;wBestStreak=0;wAnswered=false;wHistory=[];
+  wShuffled=shuffle([...wordList]);
+  document.getElementById('w-score').textContent=0;
+  document.getElementById('w-wrong').textContent=0;
+  document.getElementById('w-streak').textContent=0;
+  document.getElementById('words-game-wrap').style.display='flex';
+  document.getElementById('words-result-screen').style.display='none';
+  showWord();
+}
+function showWord(){
+  clearInterval(wTimerInterval);
+  if(wIdx>=wShuffled.length){
+    showWordsResult();
+    return;
+  }
+  const d=wShuffled[wIdx];
+  const total=wShuffled.length;
+  document.getElementById('w-progress').textContent='Soru '+(wIdx+1)+' / '+total;
+  // Display question based on type
+  if(d.type==='word'){
+    document.getElementById('w-word').textContent=d.w;
+    document.getElementById('w-word').style.fontSize='26px';
+    document.getElementById('w-hint').textContent='"'+d.h+'"';
+  } else if(d.type==='tr2en'){
+    document.getElementById('w-word').textContent='🇹🇷→🇬🇧';
+    document.getElementById('w-word').style.fontSize='22px';
+    document.getElementById('w-hint').textContent=d.w;
+  } else {
+    document.getElementById('w-word').textContent='🇬🇧→🇹🇷';
+    document.getElementById('w-word').style.fontSize='22px';
+    document.getElementById('w-hint').textContent=d.w;
+  }
+  wAnswered=false;
+  const o=document.getElementById('w-opts');
+  o.innerHTML='';
+  shuffle([...d.d]).forEach(opt=>{const b=document.createElement('button');b.className='word-opt';b.textContent=opt;b.onclick=()=>answerWord(opt,b,d.t,d);o.appendChild(b);});
+  startWordTimer();
+}
+function answerWord(ans,el,correct,d){
+  if(wAnswered)return;
+  wAnswered=true;
+  clearInterval(wTimerInterval);
+  if(ans===correct){
+    el.classList.add('correct');wScore++;wStreak++;
+    if(wStreak>wBestStreak)wBestStreak=wStreak;
+    document.getElementById('w-score').textContent=wScore;
+    document.getElementById('w-streak').textContent=wStreak;
+    wHistory.push({d,chosen:ans});
+  } else {
+    el.classList.add('wrong');wStreak=0;
+    document.getElementById('w-wrong').textContent=++wWrong;
+    document.getElementById('w-streak').textContent=0;
+    document.querySelectorAll('.word-opt').forEach(b=>{if(b.textContent===correct)b.classList.add('correct');});
+    wHistory.push({d,chosen:ans});
+  }
+  setTimeout(()=>{wIdx++;showWord();},1000);
+}
+
+function showWordsResult(){
+  clearInterval(wTimerInterval);
+  document.getElementById('words-game-wrap').style.display='none';
+  const rs=document.getElementById('words-result-screen');
+  rs.style.display='block';
+  const total=wShuffled.length,pct=Math.round(wScore/total*100);
+  document.getElementById('w-result-score').textContent=wScore+'/'+total;
+  document.getElementById('w-res-correct').textContent=wScore;
+  document.getElementById('w-res-wrong').textContent=total-wScore;
+  document.getElementById('w-res-pct').textContent=pct+'%';
+  document.getElementById('w-res-streak').textContent=wBestStreak;
+  let stars='⭐',msg='Daha çok pratik yap!';
+  if(pct>=90){stars='🌟🌟🌟';msg='Harika! İngilizce çok iyi!';}
+  else if(pct>=70){stars='⭐⭐⭐';msg='Çok iyi! Devam et!';}
+  else if(pct>=50){stars='⭐⭐';msg='Fena değil, pratik yapmaya devam!';}
+  document.getElementById('w-result-stars').textContent=stars;
+  document.getElementById('w-result-msg').textContent=msg;
+  document.getElementById('w-review-list').innerHTML='';
+}
+function showWordsReview(){
+  const rl=document.getElementById('w-review-list');
+  if(rl.children.length>0){rl.innerHTML='';return;}
+  wHistory.forEach((h,i)=>{
+    const correct=h.chosen===h.d.t;
+    const div=document.createElement('div');
+    div.className='review-item '+(correct?'r-correct':'r-wrong');
+    let typeLabel=h.d.type==='word'?'Kelime':h.d.type==='tr2en'?'TR→EN Çeviri':'EN→TR Çeviri';
+    let ansHtml=h.d.d.map(opt=>{
+      let cls='r-neutral';
+      if(opt===h.d.t)cls='r-correct-ans';
+      else if(opt===h.chosen)cls='r-wrong-ans';
+      return '<span class="review-ans '+cls+'">'+opt+'</span>';
+    }).join('');
+    div.innerHTML='<div class="review-qnum">SORU '+(i+1)+' · '+typeLabel+'<span class="review-badge">'+(correct?'✅':'❌')+'</span></div><div class="review-qtext">'+h.d.w+(h.d.type==='word'?' — <span style="color:#a06070;font-style:italic">'+h.d.h+'</span>':'')+'</div><div class="review-answers">'+ansHtml+'</div>';
+    rl.appendChild(div);
+  });
+}
+
+// HELPERS
+function shuffle(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;}
+</script>
+</body>
+</html>
