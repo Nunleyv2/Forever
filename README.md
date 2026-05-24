@@ -24,7 +24,7 @@
 
 <br>
 
-> *"Seni sevmek, en kolay ve en doğru yaptığım şey."*
+> *"Seninle her yer ev gibi hissettiriyor."*
 
 <br>
 
