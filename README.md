@@ -6,7 +6,7 @@
 
 <br>
 
-[![Siteyi Aç](https://img.shields.io/badge/♥%20Siteyi%20Aç-b5003a?style=for-the-badge&logoColor=white)](https://nunleyv2.github.io/Kursatcemre)
+[![Siteyi Aç](https://img.shields.io/badge/♥%20Siteyi%20Aç-b5003a?style=for-the-badge&logoColor=white)](https://nunleyv2.github.io/Forever/)
 
 <br>
 
